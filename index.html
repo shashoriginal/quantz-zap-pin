@@ -1,0 +1,296 @@
+<html>
+<head>
+    <title>Zap-N Pincode Memory Game</title>
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .falling-geometry {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .falling-geometry div {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            animation: fall 10s linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+        .btn {
+            background: linear-gradient(90deg, #1CB5E0 0%, #000851 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .input {
+            background: #2d3748;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            width: 100%;
+            font-size: 1rem;
+        }
+        .input::placeholder {
+            color: #a0aec0;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.875rem;
+            color: #a0aec0;
+        }
+        .footer a {
+            color: #1CB5E0;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="falling-geometry">
+        <div style="left: 10%; animation-delay: 0s;"></div>
+        <div style="left: 20%; animation-delay: 2s;"></div>
+        <div style="left: 30%; animation-delay: 4s;"></div>
+        <div style="left: 40%; animation-delay: 6s;"></div>
+        <div style="left: 50%; animation-delay: 8s;"></div>
+        <div style="left: 60%; animation-delay: 10s;"></div>
+        <div style="left: 70%; animation-delay: 12s;"></div>
+        <div style="left: 80%; animation-delay: 14s;"></div>
+        <div style="left: 90%; animation-delay: 16s;"></div>
+    </div>
+    <div id="root" class="w-full max-w-md mx-auto bg-gray-800 shadow-lg rounded-lg p-6"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const generateSequence = (length) => {
+            return Array.from({ length }, () => Math.floor(Math.random() * 10));
+        };
+
+        const LandingPage = ({ onStart }) => {
+            const [name, setName] = useState('');
+
+            const handleStart = () => {
+                if (name.trim()) {
+                    onStart(name);
+                }
+            };
+
+            return (
+                <div className="text-center fade-in">
+                    <h1 className="text-3xl font-bold mb-4 text-white pulse">Zap-N Pincode Memory Game</h1>
+                    <input
+                        type="text"
+                        className="input mb-4"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter your name"
+                    />
+                    <button
+                        className="btn"
+                        onClick={handleStart}
+                    >
+                        Start Game
+                    </button>
+                    <div className="footer">
+                        Made with ❤️ By <a href="https://github.com/shashoriginal" target="_blank">Shashank</a>. Game Inspired by Optiver.
+                    </div>
+                </div>
+            );
+        };
+
+        const ZapNGame = ({ playerName, onGameEnd }) => {
+            const [round, setRound] = useState(1);
+            const [sequence, setSequence] = useState([]);
+            const [userInput, setUserInput] = useState('');
+            const [score, setScore] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(10);
+            const [showSequence, setShowSequence] = useState(true);
+            const [sequenceLength, setSequenceLength] = useState(3);
+            const [intervalId, setIntervalId] = useState(null);
+            const [reverseOrder, setReverseOrder] = useState(false);
+            const [gameData, setGameData] = useState([]);
+
+            useEffect(() => {
+                startNewRound();
+            }, [round, sequenceLength]);
+
+            useEffect(() => {
+                const id = setInterval(() => {
+                    setTimeLeft((prev) => prev - 1);
+                }, 1000);
+                setIntervalId(id);
+
+                return () => clearInterval(id);
+            }, []);
+
+            useEffect(() => {
+                if (timeLeft <= 0) {
+                    handleTimeOut();
+                }
+            }, [timeLeft]);
+
+            const startNewRound = () => {
+                const newSequence = generateSequence(sequenceLength);
+                setSequence(newSequence);
+                setUserInput('');
+                setTimeLeft(10);
+                setShowSequence(true);
+                setReverseOrder(Math.random() < 0.5);
+                setTimeout(() => setShowSequence(false), sequenceLength * 1000);
+            };
+
+            const handleTimeOut = () => {
+                setScore((prev) => prev - 10);
+                startNewRound();
+            };
+
+            const handleSubmit = () => {
+                let correctSequence;
+                if (reverseOrder) {
+                    correctSequence = sequence.slice().reverse().join('');
+                } else {
+                    correctSequence = sequence.join('');
+                }
+
+                const isCorrect = userInput === correctSequence;
+                const roundData = {
+                    round,
+                    sequence: sequence.join(''),
+                    userInput,
+                    correctSequence,
+                    isCorrect,
+                    timeLeft,
+                    scoreChange: isCorrect ? 10 + timeLeft : -5,
+                };
+
+                setGameData((prev) => [...prev, roundData]);
+
+                if (isCorrect) {
+                    setScore((prev) => prev + 10 + timeLeft);
+                    if (sequenceLength < 12) {
+                        setSequenceLength((prev) => prev + 1);
+                    } else if (round < 35) {
+                        setRound((prev) => prev + 1);
+                        setSequenceLength(12);
+                    }
+                } else {
+                    setScore((prev) => prev - 5);
+                }
+
+                if (round >= 35) {
+                    onGameEnd({ playerName, gameData });
+                } else {
+                    startNewRound();
+                }
+            };
+
+            return (
+                <div className="text-center fade-in">
+                    <h1 className="text-3xl font-bold mb-4 text-white pulse">Zap-N Pincode Memory Game</h1>
+                    <div className="mb-4">
+                        <span className="text-lg">Round: {round}</span>
+                    </div>
+                    <div className="mb-4">
+                        <span className="text-lg">Score: <span className={score < 0 ? 'text-red-500' : 'text-green-500'}>{score}</span></span>
+                    </div>
+                    <div className="mb-4">
+                        <span className="text-lg">Time Left: {timeLeft}s</span>
+                    </div>
+                    <div className="mb-4">
+                        {showSequence ? (
+                            <div className="text-2xl font-mono">{sequence.join(' ')}</div>
+                        ) : (
+                            <div>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    placeholder={`Enter the sequence${reverseOrder ? ' in reverse' : ''}`}
+                                />
+                                {reverseOrder && <p className="text-sm text-gray-400 mt-2">Enter the sequence in reverse order</p>}
+                            </div>
+                        )}
+                    </div>
+                    {!showSequence && (
+                        <button
+                            className="btn"
+                            onClick={handleSubmit}
+                        >
+                            Submit
+                        </button>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [playerName, setPlayerName] = useState(null);
+            const [gameData, setGameData] = useState(null);
+
+            const handleStart = (name) => {
+                setPlayerName(name);
+            };
+
+            const handleGameEnd = (data) => {
+                setGameData(data);
+                console.log('Game Data:', JSON.stringify(data, null, 2));
+            };
+
+            return (
+                <div>
+                    {!playerName ? (
+                        <LandingPage onStart={handleStart} />
+                    ) : (
+                        <ZapNGame playerName={playerName} onGameEnd={handleGameEnd} />
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
