@@ -117,6 +117,12 @@
                 }
             };
 
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    handleStart();
+                }
+            };
+
             return (
                 <div className="text-center fade-in">
                     <h1 className="text-3xl font-bold mb-4 text-white pulse">Zap-N Pincode Memory Game</h1>
@@ -125,6 +131,7 @@
                         className="input mb-4"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        onKeyPress={handleKeyPress}
                         placeholder="Enter your name"
                     />
                     <button
@@ -175,10 +182,10 @@
                 const newSequence = generateSequence(sequenceLength);
                 setSequence(newSequence);
                 setUserInput('');
-                setTimeLeft(10);
+                setTimeLeft(15);
                 setShowSequence(true);
                 setReverseOrder(Math.random() < 0.5);
-                setTimeout(() => setShowSequence(false), sequenceLength * 1000);
+                setTimeout(() => setShowSequence(false), 7000); // Changed from 7000ms to 8000ms
             };
 
             const handleTimeOut = () => {
@@ -226,6 +233,12 @@
                 }
             };
 
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !showSequence) {
+                    handleSubmit();
+                }
+            };
+
             return (
                 <div className="text-center fade-in">
                     <h1 className="text-3xl font-bold mb-4 text-white pulse">Zap-N Pincode Memory Game</h1>
@@ -248,6 +261,7 @@
                                     className="input"
                                     value={userInput}
                                     onChange={(e) => setUserInput(e.target.value)}
+                                    onKeyPress={handleKeyPress}
                                     placeholder={`Enter the sequence${reverseOrder ? ' in reverse' : ''}`}
                                 />
                                 {reverseOrder && <p className="text-sm text-gray-400 mt-2">Enter the sequence in reverse order</p>}
